@@ -1,0 +1,14 @@
+[Unit]
+Description=RDNS Client
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rdns-client -config /etc/rdns/client.yaml
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

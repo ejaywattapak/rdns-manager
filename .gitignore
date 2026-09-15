@@ -1,0 +1,7 @@
+*.key
+*secret*
+*token*
+*.bundle
+*.bundle.tar.gz
+.env
+.env.*
