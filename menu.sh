@@ -38,6 +38,92 @@ ensure_deps(){
 
 xray_installed(){ [[ -x "$XRAY_BIN" ]]; }
 
+# ---------- Install Xray + config asas + servis ----------
+initial_setup(){
+  ensure_deps
+  if ! xray_installed; then
+    echo -e "${Y}==> Install Xray...${N}"
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+  else
+    echo -e "${G}Xray sudah dipasang: $($XRAY_BIN version | head -n1)${N}"
+  fi
+
+  mkdir -p /usr/local/etc/xray /var/log/xray
+  touch /var/log/xray/socks-access.log /var/log/xray/socks-error.log
+
+  local port="$SOCKS_PORT_DEFAULT"
+  read -rp "Port SOCKS5 [${SOCKS_PORT_DEFAULT}]: " p; [[ -n "${p:-}" ]] && port="$p"
+
+  if [[ -f "$CONFIG_FILE" ]]; then
+    echo -e "${Y}Config sedia ada dijumpai — kekalkan user sedia ada.${N}"
+  else
+    cat > "$CONFIG_FILE" <<EOF
+{
+  "log": {
+    "access": "/var/log/xray/socks-access.log",
+    "error": "/var/log/xray/socks-error.log",
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": ${port},
+      "protocol": "socks",
+      "settings": {
+        "auth": "password",
+        "accounts": [],
+        "udp": true
+      },
+      "tag": "socks-in"
+    }
+  ],
+  "outbounds": [
+    { "protocol": "freedom", "settings": {}, "tag": "direct" }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "ip": ["10.0.0.0/8","127.0.0.0/8","169.254.0.0/16","172.16.0.0/12","192.168.0.0/16","::1/128","fc00::/7","fe80::/10"],
+        "outboundTag": "direct"
+      }
+    ]
+  }
+}
+EOF
+    echo -e "${G}Config asas dicipta.${N}"
+  fi
+
+  cat > "$SERVICE_FILE" <<EOF
+[Unit]
+Description=Xray SOCKS5 Server
+After=network.target nss-lookup.target
+
+[Service]
+User=root
+ExecStart=${XRAY_BIN} run -config ${CONFIG_FILE}
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=1000000
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  systemctl daemon-reload
+  systemctl enable --now xray-socks >/dev/null 2>&1
+
+  open_firewall "$port"
+  ensure_bw_rules "$port"
+  command -v netfilter-persistent >/dev/null 2>&1 && netfilter-persistent save >/dev/null 2>&1 || true
+  bw_install_cron
+  bw_save
+  restart_service
+  echo -e "${G}✅ Setup asas selesai. Sekarang tambah user dari menu (pilihan 1).${N}"
+  pause
+}
+
 # ---------- Firewall ----------
 open_firewall(){
   local port="$1"
@@ -61,7 +147,7 @@ open_firewall(){
 
 need_config(){
   if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo -e "${R}Config belum wujud. Jalankan installer RDNS Manager dulu.${N}"; pause; return 1
+    echo -e "${R}Config belum wujud. Jalankan 'Setup / Install' (pilihan 9) dulu.${N}"; pause; return 1
   fi
 }
 
@@ -517,93 +603,40 @@ uninstall(){
 menu(){
   clear
 
-  # ===================== HEADER =====================
-  local host_name cpu_model cpu_cores ram_used ram_total os_name kernel uptime ip port users
-  host_name=$(hostname 2>/dev/null || echo "VPS")
-  cpu_model=$(awk -F: '/model name|Hardware/ {gsub(/^[ \t]+/,"",$2); print $2; exit}' /proc/cpuinfo 2>/dev/null)
-  [[ -z "${cpu_model:-}" ]] && cpu_model=$(lscpu 2>/dev/null | awk -F: '/Model name/ {gsub(/^[ \t]+/,"",$2); print $2; exit}')
-  [[ -z "${cpu_model:-}" ]] && cpu_model="Unknown CPU"
-  cpu_cores=$(nproc 2>/dev/null || echo "?")
-  ram_total=$(free -m 2>/dev/null | awk '/^Mem:/ {print $2}')
-  ram_used=$(free -m 2>/dev/null | awk '/^Mem:/ {print $3}')
-  [[ -z "${ram_total:-}" ]] && ram_total="?"
-  [[ -z "${ram_used:-}" ]] && ram_used="?"
-  os_name=$(grep -oP '(?<=^PRETTY_NAME=").*(?="$)' /etc/os-release 2>/dev/null)
-  [[ -z "${os_name:-}" ]] && os_name=$(awk -F= '/^PRETTY_NAME=/ {gsub(/"/,"",$2); print $2}' /etc/os-release 2>/dev/null)
-  [[ -z "${os_name:-}" ]] && os_name="Unknown OS"
-  kernel=$(uname -r 2>/dev/null || echo "?")
-  uptime=$(uptime -p 2>/dev/null | sed 's/^up //' || echo "?")
-  ip=$(curl -4 -s --max-time 3 https://ifconfig.me 2>/dev/null || echo "IP-VPS")
-  port=$(get_port 2>/dev/null || echo "-")
-  users="0"
-
-  if [[ -f "$CONFIG_FILE" ]]; then
-    users=$(jq '.inbounds[0].settings.accounts | length' "$CONFIG_FILE" 2>/dev/null || echo "?")
-  fi
-
-  # ===================== BANNER =====================
   echo -e "${C}"
   cat <<'EOF'
-####   ####   #   #   ####
-#   #  #   #  ##  #  #
-####   #   #  # # #   ###
-#  #   #   #  #  ##      #
-#   #  ####   #   #  ####
+██████  ██████  ███    ██ ███████
+██   ██ ██   ██ ████   ██ ██
+██████  ██   ██ ██ ██  ██ ███████
+██   ██ ██   ██ ██  ██ ██      ██
+██████  ██████  ██   ████ ███████
 EOF
   echo -e "${N}"
   echo ""
-  echo -e "${G} VPS Script${N}"
-  echo -e "${C}┌──────────────────────────────────────────────────────────────┐${N}"
-  echo -e "${C}│${N} ${Y}[ SERVER INFORMATION ]${N}                                   ${C}│${N}"
-  echo -e "${C}├──────────────────────────────────────────────────────────────┤${N}"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "Hostname" "$host_name"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "CPU Model" "$cpu_model"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "CPU Cores" "$cpu_cores"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "RAM" "${ram_used} / ${ram_total} MB"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "OS" "$os_name"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "Kernel" "$kernel"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "Uptime" "$uptime"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "IP Address" "$ip"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "SOCKS Port" "$port"
-  printf "${C}│${N} %-14s : %-42s ${C}│${N}\n" "Users" "$users"
-  echo -e "${C}└──────────────────────────────────────────────────────────────┘${N}"
+
+  echo -e "${C}========================${N}"
+  echo -e "${Y}       RDNS MANAGER${N}"
+  echo -e "${C}========================${N}"
   echo ""
 
-  # ===================== BANDWIDTH =====================
-  if [[ -f "$CONFIG_FILE" ]]; then
-    echo -e "${C} Traffic${N}                 ${G}Live${N}                    ${Y}Persistent${N}"
-    echo -e " Download / Upload        $(get_bandwidth)"
-    echo -e " $(get_bandwidth_persist)"
-  else
-    echo -e "${R} Status config : BELUM SETUP${N}"
-  fi
+  echo -e "${G} 1)${N} Tambah user"
+  echo -e "${G} 2)${N} Buang user"
+  echo -e "${G} 3)${N} Tukar password user"
+  echo -e "${G} 4)${N} Senarai user"
+  echo -e "${G} 5)${N} Maklumat sambungan"
+  echo -e "${G} 6)${N} Status servis"
+  echo -e "${G} 7)${N} Test proxy"
+  echo -e "${G} 8)${N} Restart servis"
+  echo -e "${G}10)${N} Uninstall servis"
+  echo -e "${G}11)${N} Set kuota bulanan"
+  echo -e "${G}12)${N} Reset statistik"
+  echo -e "${G}13)${N} Auto tindakan kuota"
+  echo -e "${G}14)${N} Set expired user"
+  echo -e "${G}15)${N} Renew user"
+  echo -e "${R} 0)${N} Keluar"
   echo ""
 
-  # ===================== MENU =====================
-  echo -e "${C}╔══════════════════════════════════════════════════════════════╗${N}"
-  echo -e "${C}║${N}                     ${Y}[ USER MENU ]${N}                       ${C}║${N}"
-  echo -e "${C}╠══════════════════════════════════════════════════════════════╣${N}"
-  echo -e "${C}║${N}  ${G}( 1 )${N} Tambah user             ${G}( 2 )${N} Buang user            ${C}║${N}"
-  echo -e "${C}║${N}  ${G}( 3 )${N} Tukar password user     ${G}( 4 )${N} Senarai user           ${C}║${N}"
-  echo -e "${C}║${N}  ${G}( 5 )${N} Maklumat sambungan      ${G}( 6 )${N} Status servis           ${C}║${N}"
-  echo -e "${C}║${N}  ${G}( 7 )${N} Test proxy              ${G}( 8 )${N} Restart servis          ${C}║${N}"
-  echo -e "${C}║${N}  ${G}(14 )${N} Set expired user       ${G}(15 )${N} Renew user              ${C}║${N}"
-  echo -e "${C}╚══════════════════════════════════════════════════════════════╝${N}"
-  echo ""
-  echo -e "${C}╔══════════════════════════════════════════════════════════════╗${N}"
-  echo -e "${C}║${N}                      ${Y}[ VPS MENU ]${N}                        ${C}║${N}"
-  echo -e "${C}╠══════════════════════════════════════════════════════════════╣${N}"
-  echo -e "${C}║${N}                          ${G}(10 )${N} Uninstall servis       ${C}║${N}"
-  echo -e "${C}║${N}  ${G}(11 )${N} Set kuota bulanan      ${G}(12 )${N} Reset statistik        ${C}║${N}"
-  echo -e "${C}║${N}  ${G}(13 )${N} Auto tindakan kuota    ${G}( 0 )${N} Keluar                 ${C}║${N}"
-  echo -e "${C}╚══════════════════════════════════════════════════════════════╝${N}"
-  echo ""
-  echo -e "${C}┌──────────────────────────────────────────────────────────────┐${N}"
-  echo -e "${C}│${N} ${Y}Socks-Manager${N}                                             ${C}│${N}"
-  echo -e "${C}│${N} ${G}Xray SOCKS5 • User • Expiry • Bandwidth • Quota${N}          ${C}│${N}"
-  echo -e "${C}└──────────────────────────────────────────────────────────────┘${N}"
-  echo ""
-  read -rp " ${G}Select menu${N} : " ch
+  read -rp "Pilih menu : " ch
 
   case "$ch" in
     1) add_user ;;
