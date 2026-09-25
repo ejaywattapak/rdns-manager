@@ -10,54 +10,34 @@ BASE_DIR="/usr/local/share/ejvpn-rdns"
 SOURCE="$BASE_DIR/rdns-menu.sh"
 MENU="$BASE_DIR/menu.sh"
 
-clear
-printf '\033[1;36m'
-cat <<'EOF'
- ______     _ ____   _   _ ____  
-| ____|_  _| |  _ \ / \ | / ___| 
-|  _| \ \/ / | |_) / _ \| \___ \ 
-| |___ >  <| |  _ < ___ \___) |
-|_____/_/\_\_|_| \_\_/ \_\____/ 
-EOF
-printf '\033[0m\n'
-echo "==================="
-echo "Sila pilih menu option:"
-echo ""
-echo "1. Install RDNS Manager"
-echo "2. Exit"
-echo ""
+[[ "${1:-}" == "--install" ]] || {
+  echo "Gunakan installer.sh untuk pemasangan."
+  exit 1
+}
 
-read -rp "Pilih menu: " ch
+mkdir -p "$BASE_DIR"
+cp "$SCRIPT_DIR/rdns-menu.sh" "$SOURCE"
+cp "$SCRIPT_DIR/menu.sh" "$MENU"
+chmod +x "$SOURCE" "$MENU"
 
-case "$ch" in
-  1)
-    mkdir -p "$BASE_DIR"
-    cp "$SCRIPT_DIR/rdns-menu.sh" "$SOURCE"
-    cp "$SCRIPT_DIR/menu.sh" "$MENU"
-    chmod +x "$SOURCE" "$MENU"
+# Jalankan fungsi initial_setup asal sahaja tanpa main loop.
+bash -c '
+  source <(sed "/^# ---------- Mod cron (tanpa menu) ----------/q" "$1")
+  initial_setup
+' "$MENU" "$SOURCE"
 
-    echo ""
-    echo "==> Memulakan Setup / Install..."
-    echo ""
+# Auto buka menu setiap root login SSH.
+BASHRC="/root/.bashrc"
+MARKER="# EJVPN-RDNS-AUTO-MENU"
 
-    # Ambil definisi fungsi asal sahaja, tanpa menjalankan main menu.
-    # $0 ditetapkan kepada menu.sh supaya cron asal menunjuk ke fail
-    # menu.sh yang kekal di BASE_DIR.
-    bash -c '
-      source <(sed "/^# ---------- Mod cron (tanpa menu) ----------/q" "$1")
-      initial_setup
-    ' "$MENU" "$SOURCE"
+if ! grep -Fq "$MARKER" "$BASHRC" 2>/dev/null; then
+  cat >> "$BASHRC" <<'BASHRC_EOF'
 
-    echo ""
-    echo "==> Setup selesai."
-    sleep 1
-    exec bash "$MENU"
-    ;;
-  2)
-    exit 0
-    ;;
-  *)
-    echo "Pilihan tak sah."
-    exit 1
-    ;;
-esac
+# EJVPN-RDNS-AUTO-MENU
+if [[ $- == *i* ]] && [[ -x /usr/local/share/ejvpn-rdns/menu.sh ]]; then
+  bash /usr/local/share/ejvpn-rdns/menu.sh
+fi
+BASHRC_EOF
+fi
+
+exec bash "$MENU"

@@ -602,9 +602,16 @@ uninstall(){
 
 menu(){
   clear
-  echo -e "${C}==============================${N}"
-  echo -e "${G}           R D N S${N}"
-  echo -e "${C}==============================${N}"
+
+  printf '\033[1;36m'
+  if command -v figlet >/dev/null 2>&1; then
+    figlet -f 3-d "EJ RDNS" 2>/dev/null || figlet "EJ RDNS"
+  else
+    echo "EJ RDNS"
+  fi
+  printf '\033[0m\n'
+
+  echo "=============================="
   echo ""
   echo -e "${G}1)${N}  Tambah user"
   echo -e "${G}2)${N}  Buang user"
@@ -614,12 +621,12 @@ menu(){
   echo -e "${G}6)${N}  Status servis"
   echo -e "${G}7)${N}  Test proxy"
   echo -e "${G}8)${N}  Restart servis"
-  echo -e "${G}10)${N} Uninstall servis"
-  echo -e "${G}11)${N} Set kuota bulanan"
-  echo -e "${G}12)${N} Reset statistik"
-  echo -e "${G}13)${N} Auto tindakan kuota"
-  echo -e "${G}14)${N} Set expired user"
-  echo -e "${G}15)${N} Renew user"
+  echo -e "${G}9)${N}  Uninstall servis"
+  echo -e "${G}10)${N} Set kuota bulanan"
+  echo -e "${G}11)${N} Reset statistik"
+  echo -e "${G}12)${N} Auto tindakan kuota"
+  echo -e "${G}13)${N} Set expired user"
+  echo -e "${G}14)${N} Renew user"
   echo -e "${G}0)${N}  Keluar"
   echo ""
   read -rp "Pilih menu: " ch
@@ -633,12 +640,12 @@ menu(){
     6) status ;;
     7) test_local ;;
     8) restart_service; pause ;;
-    10) uninstall ;;
-    11) set_quota ;;
-    12) reset_bw ;;
-    13) set_enforce ;;
-    14) set_expiry ;;
-    15) renew_user ;;
+    9) uninstall ;;
+    10) set_quota ;;
+    11) reset_bw ;;
+    12) set_enforce ;;
+    13) set_expiry ;;
+    14) renew_user ;;
     0) exit 0 ;;
     *) echo -e "${R}Pilihan tak sah.${N}"; sleep 1 ;;
   esac
