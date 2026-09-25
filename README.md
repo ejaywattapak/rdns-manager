@@ -1,7 +1,7 @@
 # 🚀 RDNS Manager by ejaywattapak
 
 <p align="center">
-  <img src="main/banner.png" alt="EJ-RDNS" width="100%">
+  <img src="./banner.png" alt="EJ-RDNS" width="100%">
 </p>
 
 > Secure Decision Node ↔ Exit Node RDNS deployment manager.
