@@ -48,52 +48,13 @@ rdns-manager/
 
 ## 🚀 Installation
 
-### 1. Clone the repository
+### Copy & Paste
 
 ```bash
-cd /root
-git clone https://github.com/ejaywattapak/rdns-manager.git
-cd rdns-manager
-```
-
-### 2. Install the RDNS client
-
-```bash
-install -m 755 rdns-client-v0.2.0 /usr/local/bin/rdns-client
-
-mkdir -p /etc/rdns/certs
-
-install -m 644 etc/rdns/client.yaml /etc/rdns/client.yaml
-install -m 644 etc/rdns/ca.crt /etc/rdns/ca.crt
-install -m 644 etc/rdns/rules.json /etc/rdns/rules.json
-install -m 644 etc/rdns/certs/node.crt /etc/rdns/certs/node.crt
-
-install -m 644 etc/systemd/system/rdns-client.service     /etc/systemd/system/rdns-client.service
-```
-
-### 3. Start the service
-
-```bash
-systemctl daemon-reload
-systemctl enable --now rdns-client
-```
-
-### 4. Verify
-
-```bash
-systemctl status rdns-client --no-pager -l
-```
-
-Check the listening ports:
-
-```bash
-ss -lntup | grep -E ':5353|:14300|:14400'
-```
-
-View live logs:
-
-```bash
-journalctl -u rdns-client -f
+apt update -y && apt install -y wget && \
+wget -qO /usr/local/bin/rdns-menu https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/rdns-menu.sh && \
+chmod +x /usr/local/bin/rdns-menu && \
+echo "Installed: /usr/local/bin/rdns-menu"
 ```
 
 ## ⚠️ Important
