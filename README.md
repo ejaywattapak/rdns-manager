@@ -1,12 +1,10 @@
 # 🚀 RDNS Manager by ejaywattapak
 
+
 <p align="center">
   <img src="./banner.png" alt="EJ-RDNS" width="100%">
 </p>
 
-> Secure Decision Node ↔ Exit Node RDNS deployment manager.
-
-RDNS Manager provides a lightweight RDNS client deployment bundle with automatic DNS, SNI and QUIC interception.
 
 ## ✨ Features
 
