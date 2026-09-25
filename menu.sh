@@ -602,41 +602,27 @@ uninstall(){
 
 menu(){
   clear
-
-  echo -e "${C}"
-  cat <<'EOF'
-██████  ██████  ███    ██ ███████
-██   ██ ██   ██ ████   ██ ██
-██████  ██   ██ ██ ██  ██ ███████
-██   ██ ██   ██ ██  ██ ██      ██
-██████  ██████  ██   ████ ███████
-EOF
-  echo -e "${N}"
+  echo -e "${C}==============================${N}"
+  echo -e "${G}           R D N S${N}"
+  echo -e "${C}==============================${N}"
   echo ""
-
-  echo -e "${C}========================${N}"
-  echo -e "${Y}       RDNS MANAGER${N}"
-  echo -e "${C}========================${N}"
-  echo ""
-
-  echo -e "${G} 1)${N} Tambah user"
-  echo -e "${G} 2)${N} Buang user"
-  echo -e "${G} 3)${N} Tukar password user"
-  echo -e "${G} 4)${N} Senarai user"
-  echo -e "${G} 5)${N} Maklumat sambungan"
-  echo -e "${G} 6)${N} Status servis"
-  echo -e "${G} 7)${N} Test proxy"
-  echo -e "${G} 8)${N} Restart servis"
+  echo -e "${G}1)${N}  Tambah user"
+  echo -e "${G}2)${N}  Buang user"
+  echo -e "${G}3)${N}  Tukar password user"
+  echo -e "${G}4)${N}  Senarai user"
+  echo -e "${G}5)${N}  Maklumat sambungan"
+  echo -e "${G}6)${N}  Status servis"
+  echo -e "${G}7)${N}  Test proxy"
+  echo -e "${G}8)${N}  Restart servis"
   echo -e "${G}10)${N} Uninstall servis"
   echo -e "${G}11)${N} Set kuota bulanan"
   echo -e "${G}12)${N} Reset statistik"
   echo -e "${G}13)${N} Auto tindakan kuota"
   echo -e "${G}14)${N} Set expired user"
   echo -e "${G}15)${N} Renew user"
-  echo -e "${R} 0)${N} Keluar"
+  echo -e "${G}0)${N}  Keluar"
   echo ""
-
-  read -rp "Pilih menu : " ch
+  read -rp "Pilih menu: " ch
 
   case "$ch" in
     1) add_user ;;
