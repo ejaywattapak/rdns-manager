@@ -1,5 +1,8 @@
 # 🚀 RDNS Manager by ejaywattapak
 
+[![Telegram](https://img.shields.io/badge/Telegram-Contact%20Me-26A5E4?logo=telegram&logoColor=white)](https://t.me/ejwtpkvpn)
+> PM for license key to use this script
+
 
 <p align="center">
   <img src="./banner.png" alt="EJ-RDNS" width="100%">
