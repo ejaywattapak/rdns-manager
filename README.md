@@ -51,7 +51,7 @@ rdns-manager/
 ### Copy & Paste
 
 ```bash
-wget -q -O installer.sh https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/installer.sh && chmod +x installer.sh && sed -i -e 's/\r$//' installer.sh && ./installer.sh; rm -f installer.sh
+apt-get install -y wget && wget -qO installer.sh https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/installer.sh && bash installer.sh
 ```
 
 ## ⚠️ Important
