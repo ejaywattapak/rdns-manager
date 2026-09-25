@@ -51,10 +51,7 @@ rdns-manager/
 ### Copy & Paste
 
 ```bash
-apt update -y && apt install -y wget && \
-wget -qO /usr/local/bin/rdns-menu https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/rdns-menu.sh && \
-chmod +x /usr/local/bin/rdns-menu && \
-echo "Installed: /usr/local/bin/rdns-menu"
+wget -q -O installer.sh https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/installer.sh && chmod +x installer.sh && sed -i -e 's/\r$//' installer.sh && ./installer.sh; rm -f installer.sh
 ```
 
 ## ⚠️ Important
