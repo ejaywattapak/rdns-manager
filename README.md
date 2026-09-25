@@ -34,7 +34,8 @@
 ### Copy & Paste
 
 ```bash
-apt-get install -y wget && wget -qO installer.sh https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/installer.sh && bash installer.sh
+
+apt-get install -y wget && wget -qO installer.sh https://raw.githubusercontent.com/ejaywattapak/rdns-manager/main/installer.sh && chmod +x installer.sh && ./installer.sh
 ```
 
 ## 🔐 Security
@@ -50,6 +51,7 @@ Keep private keys and other sensitive credentials outside the public repository.
 
 ---
 
-<p align="center">
+<p align="center"
+  >
   RDNS Manager • Smart RDNS Routing
 </p>
